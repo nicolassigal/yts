@@ -12,13 +12,7 @@ var opts = {
  maxResults: 50,
  key: 'AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw'
 };
-var YD = new YoutubeMp3Downloader({
-  "ffmpegPath": ffmpeg.path,     // Where is the FFmpeg binary located?
-  "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
-  "youtubeVideoQuality": "highest",       // What video quality should be used?
-  "queueParallelism": 2,                  // How many parallel downloads/encodes should be started?
-  "progressTimeout": 2000                 // How long should be the interval of the progress reports
-});
+
 var express    = require('express');        // call express
 var app        = express();                 // define our app using express
 var bodyParser = require('body-parser');
@@ -55,6 +49,15 @@ router.get('/download/:name', function(req, res) {
 });
 
 router.get('/getlink/:id', function(req, res) {
+
+  var YD = new YoutubeMp3Downloader({
+    "ffmpegPath": ffmpeg.path,     // Where is the FFmpeg binary located?
+    "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
+    "youtubeVideoQuality": "highest",       // What video quality should be used?
+    "queueParallelism": 2,                  // How many parallel downloads/encodes should be started?
+    "progressTimeout": 2000                 // How long should be the interval of the progress reports
+  });
+  
   YD.download(req.params.id);
   YD.on("finished", function(err, data) {
     res.json({ok: true, data: data})
