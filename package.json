@@ -1,0 +1,19 @@
+{
+  "name": "yts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.13",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
+    "youtube-mp3-downloader": "^0.5.2",
+    "youtube-search": "^1.0.10"
+  }
+}
