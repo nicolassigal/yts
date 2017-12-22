@@ -36,7 +36,7 @@ router.get('/search/:query', function(req, res) {
 });
 
 router.get('/download/:name', function(req, res) {
-    var file = __dirname + '/files/'+ req.params.name +'.mp3';
+    var file = __dirname + '/files/'+ req.params.name;
   
     var filename = path.basename(file);
     var mimetype = mime.lookup(file);
@@ -57,7 +57,7 @@ router.get('/getlink/:id', function(req, res) {
     "queueParallelism": 2,                  // How many parallel downloads/encodes should be started?
     "progressTimeout": 2000                 // How long should be the interval of the progress reports
   });
-  
+
   YD.download(req.params.id);
   YD.on("finished", function(err, data) {
     res.json({ok: true, data: data})
