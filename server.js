@@ -51,6 +51,7 @@ router.get('/download/:id', function(req, res) {
     console.log(data);
   });
   YD.on("finished", function(err, data) {
+    console.log(data.videoTitle);
     var file = __dirname + '/files/'+ data.videoTitle +'.mp3';
   
     var filename = path.basename(file);
