@@ -3,6 +3,8 @@ var ffmpeg = require('@ffmpeg-installer/ffmpeg');
 var YoutubeMp3Downloader = require("youtube-mp3-downloader");
 var path = require('path');
 var http = require('http');
+var mime = require('mime');
+var fs = require('fs');
 
 var streamUrl;
 
@@ -39,8 +41,20 @@ router.get('/search/:query', function(req, res) {
    });
 });
 
-
 router.get('/download/:id', function(req, res) {
+    var file = __dirname + '/files/'+ req.params.id +'.mp3';
+  
+    var filename = path.basename(file);
+    var mimetype = mime.lookup(file);
+  
+    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+    res.setHeader('Content-type', mimetype);
+  
+    var filestream = fs.createReadStream(file);
+    filestream.pipe(res);
+});
+
+router.get('/getlink/:id', function(req, res) {
   YD.download(req.params.id);
 
   YD.on("error", function(error) {
