@@ -28,6 +28,16 @@ var cors = require('cors')
 var isPlaying = false;
 app.use(cors());
 
+function deleteFile (file) { 
+  fs.unlink(file, function (err) {
+      if (err) {
+          console.error(err.toString());
+      } else {
+          console.warn(file + ' deleted');
+      }
+  });
+}
+
 router.get('/search/:query', function(req, res) {
   search(req.params.query, opts, function(err, results) {
     if(err) return console.log(err);
@@ -45,7 +55,23 @@ router.get('/download/:name', function(req, res) {
     res.setHeader('Content-type', mimetype);
   
     var filestream = fs.createReadStream(file);
-    filestream.pipe(res);
+    filestream.pipe(res).once("close", function () {
+      stream.destroy(); // makesure stream closed, not close if download aborted.
+      deleteFile(file);
+  });
+});
+
+router.get('/delete/:name', function(req, res) {
+  var file = __dirname + '/files/'+ req.params.name;
+
+  var filename = path.basename(file);
+  var mimetype = mime.lookup(file);
+
+  res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+  res.setHeader('Content-type', mimetype);
+
+  var filestream = fs.createReadStream(file);
+  filestream.pipe(res);
 });
 
 router.get('/getlink/:id', function(req, res) {
