@@ -56,13 +56,6 @@ router.get('/download/:name', function(req, res) {
 
 router.get('/getlink/:id', function(req, res) {
   YD.download(req.params.id);
-
-  YD.on("error", function(error) {
-    console.log("Error:", error);
-  });
-  YD.on("progress", function(err, data) {
-    console.log(data);
-  });
   YD.on("finished", function(err, data) {
     res.json({ok: true, data: data})
   });
