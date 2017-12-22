@@ -9,7 +9,7 @@ var fs = require('fs');
 var streamUrl;
 
 var opts = {
- maxResults: 10,
+ maxResults: 50,
  key: 'AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw'
 };
 var YD = new YoutubeMp3Downloader({
@@ -42,19 +42,6 @@ router.get('/search/:query', function(req, res) {
 });
 
 router.get('/download/:id', function(req, res) {
-    var file = __dirname + '/files/'+ req.params.id +'.mp3';
-  
-    var filename = path.basename(file);
-    var mimetype = mime.lookup(file);
-  
-    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
-    res.setHeader('Content-type', mimetype);
-  
-    var filestream = fs.createReadStream(file);
-    filestream.pipe(res);
-});
-
-router.get('/getlink/:id', function(req, res) {
   YD.download(req.params.id);
 
   YD.on("error", function(error) {
@@ -64,7 +51,16 @@ router.get('/getlink/:id', function(req, res) {
     console.log(data);
   });
   YD.on("finished", function(err, data) {
-    res.json({ok: true, data: data})
+    var file = __dirname + '/files/'+ data.videoTitle +'.mp3';
+  
+    var filename = path.basename(file);
+    var mimetype = mime.lookup(file);
+  
+    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+    res.setHeader('Content-type', mimetype);
+  
+    var filestream = fs.createReadStream(file);
+    filestream.pipe(res);
   });
 });
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
