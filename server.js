@@ -56,7 +56,9 @@ router.get('/download/:name', function(req, res) {
   
     var filestream = fs.createReadStream(file);
     filestream.pipe(res).once("close", function () {
+      if(filestream){
       filestream.destroy(); // makesure stream closed, not close if download aborted.
+      }
       deleteFile(file);
   });
 });
