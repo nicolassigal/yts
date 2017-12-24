@@ -24,7 +24,8 @@ var port = process.env.PORT || 5500;
 app.set('port', port);
 var router = express.Router();
 var percent;
-var cors = require('cors')
+var cors = require('cors');
+var files = [];
 var isPlaying = false;
 app.use(cors());
 
@@ -47,7 +48,6 @@ router.get('/search/:query', function(req, res) {
 
 router.get('/download/:name', function(req, res) {
     var file = __dirname + '/files/'+ req.params.name;
-  
     var filename = path.basename(file);
     var mimetype = mime.lookup(file);
   
@@ -82,7 +82,7 @@ router.get('/getlink/:id', function(req, res) {
     "ffmpegPath": ffmpeg.path,     // Where is the FFmpeg binary located?
     "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
     "youtubeVideoQuality": "highest",       // What video quality should be used?
-    "queueParallelism": 2,                  // How many parallel downloads/encodes should be started?
+    "queueParallelism": 20,                  // How many parallel downloads/encodes should be started?
     "progressTimeout": 2000                 // How long should be the interval of the progress reports
   });
 
