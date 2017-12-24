@@ -83,13 +83,12 @@ router.get('/getlink/:id', function(req, res) {
     "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
     "youtubeVideoQuality": "highest",       // What video quality should be used?
     "queueParallelism": 20,                  // How many parallel downloads/encodes should be started?
-    "progressTimeout": 2000                 // How long should be the interval of the progress reports
+    "progressTimeout": 1000                 // How long should be the interval of the progress reports
   });
 
   YD.download(req.params.id);
-  YD.on("finished", function(err, data) {
-    res.json({ok: true, data: data})
-  });
+  res.json({ok: true});
+  
 });
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);
