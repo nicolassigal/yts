@@ -5,7 +5,6 @@ var path = require('path');
 var http = require('http');
 var mime = require('mime');
 var fs = require('fs');
-
 var streamUrl;
 
 var opts = {
@@ -94,5 +93,18 @@ router.get('/getlink/:id', function(req, res) {
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);
 app.listen(port);
-//var server = http.createServer(app);
+
+var server = http.createServer(app);
+var io = require('socket.io')(server);
+
+io.on('connection', function(client) {  
+  console.log('Client connected...');
+
+  client.on('join', function(data) {
+      console.log(data);
+      client.emit('messages', 'Hello from server');
+  });
+
+});
+
 //server.listen(port, () => console.log(`API running on http://localhost:${port}`));
