@@ -6,7 +6,13 @@ var http = require('http');
 var mime = require('mime');
 var fs = require('fs');
 var streamUrl;
-
+var YD = new YoutubeMp3Downloader({
+  "ffmpegPath": ffmpeg.path,     // Where is the FFmpeg binary located?
+  "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
+  "youtubeVideoQuality": "highest",       // What video quality should be used?
+  "queueParallelism": 20,                  // How many parallel downloads/encodes should be started?
+  "progressTimeout": 1000                 // How long should be the interval of the progress reports
+});
 var opts = {
  maxResults: 50,
  key: 'AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw'
@@ -80,15 +86,6 @@ router.get('/delete/:name', function(req, res) {
 });
 
 router.get('/getlink/:id', function(req, res) {
-
-  var YD = new YoutubeMp3Downloader({
-    "ffmpegPath": ffmpeg.path,     // Where is the FFmpeg binary located?
-    "outputPath": __dirname + '/files',    // Where should the downloaded and encoded files be stored?
-    "youtubeVideoQuality": "highest",       // What video quality should be used?
-    "queueParallelism": 20,                  // How many parallel downloads/encodes should be started?
-    "progressTimeout": 1000                 // How long should be the interval of the progress reports
-  });
-
   YD.download(req.params.id);
   YD.on("finished", function(err, data) {
     res.json({ok: true, data: data})
@@ -97,18 +94,5 @@ router.get('/getlink/:id', function(req, res) {
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);
 app.listen(port);
-
-var server = http.createServer(app);
-var io = require('socket.io')(server);
-
-io.on('connection', function(client) {  
-  console.log('Client connected...');
-
-  client.on('join', function(data) {
-      console.log(data);
-      client.emit('messages', 'Hello from server');
-  });
-
-});
 
 //server.listen(port, () => console.log(`API running on http://localhost:${port}`));
