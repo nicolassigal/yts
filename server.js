@@ -87,8 +87,9 @@ router.get('/getlink/:id', function(req, res) {
   });
 
   YD.download(req.params.id);
-  res.json({ok: true});
-  
+  YD.on("finished", function(err, data) {
+    res.json({ok: true, data: data})
+  });
 });
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);
