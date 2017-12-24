@@ -38,6 +38,10 @@ function deleteFile (file) {
   });
 }
 
+router.get('/', function(req, res) {
+  res.json({msg: "hi!"});
+});
+
 router.get('/search/:query', function(req, res) {
   search(req.params.query, opts, function(err, results) {
     if(err) return console.log(err);
