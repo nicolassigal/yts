@@ -87,9 +87,6 @@ router.get('/delete/:name', function(req, res) {
 
 router.get('/getlink/:id', function(req, res) {
   YD.download(req.params.id);
-  YD.on("finished", function(err, data) {
-    res.json({ok: true, data: data})
-  });
 });
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);
