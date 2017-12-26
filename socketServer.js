@@ -82,9 +82,11 @@ function deleteAll() {
         if (err) throw err;
       
         for (const file of files) {
+          if(fs.existsSync(__dirname + "/files/"+ file)){
           fs.unlink(path.join(__dirname + "/files", file), err => {
             if (err) throw err;
           });
+        }
         }
       });
   }, 150000);
@@ -100,7 +102,9 @@ io.on("connection", socket => {
     });
   });
   YD.on("finished", function(err, data) {
-    socket.emit("download-finished", { id: data.videoId, data: data });
+    if (fs.existsSync(__dirname + "/files/"+ data.videoTitle + ".mp3")) {
+      socket.emit("download-finished", { id: data.videoId, data: data });
+    }
   });
 
   YD.on("queueSize", function(size) {
