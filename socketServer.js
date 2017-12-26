@@ -68,7 +68,7 @@ router.get("/download/:name", function(req, res) {
 function deleteAll () {
     setTimeout(function() {
         fs.removeSync(dwnDir);
-    }, 15000);
+    }, 36000);
 }
 io.on("connection", socket => {
 var YD = new YoutubeMp3Downloader({
