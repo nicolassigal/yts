@@ -57,11 +57,8 @@ io.on('connection', (socket) => {
         var filename = path.basename(file);
         var mimetype = mime.lookup(file);
       
-        res.setHeader('Content-disposition', 'attachment; filename=' + filename);
-        res.setHeader('Content-type', mimetype);
-      
         var filestream = fs.createReadStream(file);
-        filestream.pipe(res).once("close", function () {
+        filestream.pipe().once("close", function () {
           if(filestream){
           filestream.destroy(); // makesure stream closed, not close if download aborted.
           }
