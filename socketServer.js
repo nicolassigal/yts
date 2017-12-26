@@ -9,7 +9,7 @@ const INDEX = path.join(__dirname, "index.html");
 const ffmpeg = require("@ffmpeg-installer/ffmpeg");
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
 const http = require("http");
-
+const crypto = require('crypto');
 const stream = require("youtube-audio-stream-2");
 const url = "http://youtube.com/watch?v=";
 const decoder = require("lame").Decoder;
@@ -23,6 +23,7 @@ const app = express();
 const router = express.Router();
 var server = http.createServer(app);
 var io = require("socket.io").listen(server);
+let dwnDir;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -30,14 +31,6 @@ app.use(express.static(path.join(__dirname, "dist")));
 app.use(cors());
 app.use("/api", router);
 server.listen(PORT, () => console.log(`Listening on ${PORT}`));
-
-var YD = new YoutubeMp3Downloader({
-  ffmpegPath: ffmpeg.path,
-  outputPath: __dirname + "/files",
-  youtubeVideoQuality: "highest",
-  queueParallelism: 5,
-  progressTimeout: 100
-});
 
 function deleteFile(file) {
   fs.unlink(file, function(err) {
@@ -49,8 +42,20 @@ function deleteFile(file) {
   });
 }
 
+function generateDir() {
+    dwnDir = __dirname + "/files/" + generate_key();
+    fs.mkdirSync(dwnDir);
+    return dwnDir;
+}
+
+function generate_key() {
+    var sha = crypto.createHash('sha256');
+    sha.update(Math.random().toString());
+    return sha.digest('hex');
+};
+
 router.get("/download/:name", function(req, res) {
-  var file = __dirname + "/files/" + req.params.name;
+  var file = dwnDir + "/" + req.params.name;
   var filename = path.basename(file);
   var mimetype = mime.lookup(file);
 
@@ -65,7 +70,27 @@ router.get("/download/:name", function(req, res) {
   });
 });
 
+
+function deleteAll () {
+    setTimeout(function() {
+        fs.readdir(dwnDir, (err, files) => {
+            if (err) throw err;
+            for (const file of files) {
+                if (fs.existsSync(dwnDir + "/" + file)) {
+                    deleteFile(dwnDir + "/" + file);
+                }
+            }
+        });
+    }, 15000);
+}
 io.on("connection", socket => {
+var YD = new YoutubeMp3Downloader({
+    ffmpegPath: ffmpeg.path,
+    outputPath: generateDir(),
+    youtubeVideoQuality: "highest",
+    queueParallelism: 5,
+    progressTimeout: 100
+    });
   console.log("Client connected");
   YD.on("progress", function(progress) {
     socket.emit("download-progress", {
@@ -111,18 +136,12 @@ io.on("connection", socket => {
 
   YD.on("queueSize", function(size) {
     if (size === 0) {
-      setTimeout(function() {
-        fs.readdir(__dirname + "/files", (err, files) => {
-          if (err) throw err;
-          for (const file of files) {
-            if (fs.existsSync(__dirname + "/files/" + file)) {
-              deleteFile(__dirname + "/files/" + file);
-            }
-          }
-        });
-      }, 15000);
+        deleteAll();
     }
   });
 
-  socket.on("disconnect", () => console.log("Client disconnected"));
+  socket.on("disconnect", () => {
+        deleteAll();
+        fs.rmdirSync(dwnDir);
+    });
 });
