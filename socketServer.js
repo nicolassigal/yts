@@ -13,7 +13,7 @@ const YD = new YoutubeMp3Downloader({
     "outputPath": __dirname + '/files',
     "youtubeVideoQuality": "highest",
     "queueParallelism": 20,
-    "progressTimeout": 1000
+    "progressTimeout": 100
 });
 const server = express()
   .use((req, res) => res.sendFile(INDEX) )
