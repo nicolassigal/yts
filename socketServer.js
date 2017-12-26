@@ -53,17 +53,6 @@ io.on('connection', (socket) => {
     });
     YD.on("finished", function(err, data) {
         console.log("data", data);
-        var file = __dirname + '/files/' + data.title + '.mp3';
-        var filename = path.basename(file);
-        var mimetype = mime.lookup(file);
-      
-        var filestream = fs.createReadStream(file);
-        filestream.pipe().once("close", function () {
-          if(filestream){
-          filestream.destroy(); // makesure stream closed, not close if download aborted.
-          }
-          deleteFile(file);
-      });
         socket.emit('download-finished', {id: id, data: data});
     });
 
