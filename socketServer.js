@@ -10,19 +10,30 @@ const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
 const http = require('http');
 const mime = require('mime');
+const cors = require('cors');
 const fs = require('fs');
-const YD = new YoutubeMp3Downloader({
+const bodyParser = require('body-parser');
+
+const app  = express(); 
+const router = express.Router();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server); 
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'dist')));
+app.use(cors());
+app.use('/api', router);
+server.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+var YD = new YoutubeMp3Downloader({
     "ffmpegPath": ffmpeg.path,
     "outputPath": __dirname + '/files',
     "youtubeVideoQuality": "highest",
-    "queueParallelism": 20,
+    "queueParallelism": 5,
     "progressTimeout": 100
 });
-const server = express()
-  .use((req, res) => res.sendFile(INDEX) )
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
-const io = socketIO(server);
+
 
 function deleteFile (file) { 
     fs.unlink(file, function (err) {
@@ -34,9 +45,34 @@ function deleteFile (file) {
     });
 }
 
+router.get('/download/:name', function(req, res) {
+    var file = __dirname + '/files/'+ req.params.name;
+    var filename = path.basename(file);
+    var mimetype = mime.lookup(file);
+  
+    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+    res.setHeader('Content-type', mimetype);
+  
+    var filestream = fs.createReadStream(file);
+    filestream.pipe(res).once("close", function () {
+      if(filestream){
+      filestream.destroy(); // makesure stream closed, not close if download aborted.
+      }
+  });
+});
+
 io.on('connection', (socket) => {
   console.log('Client connected');
+    YD.on("progress", function(progress) {
+    socket.emit('download-progress', {id: progress.videoId, progress: progress});
+    });
+    YD.on("finished", function(err, data) {
+        socket.emit('download-finished', {id: data.videoId, data: data});
+    });
 
+    YD.on("queueSize", function(size) {
+        socket.emit('queue-changed', {size: size});
+    });
   socket.on('search', query => {
     search(query, opts, function(err, results) {
         if(err) return console.log(err);
@@ -45,21 +81,23 @@ io.on('connection', (socket) => {
   })
 
   socket.on('download', id  => {
-    console.log("downloading id", id);
     YD.download(id);
-    YD.on("progress", function(progress) {
-        console.log("progress", progress);
-        socket.emit('download-progress', {id: id, progress: progress});
-    });
-    YD.on("finished", function(err, data) {
-        console.log("data", data);
-        socket.emit('download-finished', {id: id, data: data});
-    });
+  });
 
-    YD.on("queueSize", function(size) {
-        console.log("size", size);
-        socket.emit('queue-changed', {size: size});
-    });
-  })
+  YD.on("queueSize", function(size) {
+      if(size === 0){
+        setTimeout(function(){
+            fs.readdir(__dirname + '/files', (err, files) => {
+                if (err) throw err;
+                for (const file of files) {
+                    if (fs.existsSync(__dirname + '/files/'+file)) {
+                        deleteFile(__dirname + '/files/'+file);
+                    }
+                }
+            }); 
+        }, 15000);
+      }
+  });
+
   socket.on('disconnect', () => console.log('Client disconnected'));
 });
