@@ -16,8 +16,10 @@ const io = socketIO(server);
 io.on('connection', (socket) => {
   console.log('Client connected');
   socket.on('search', query => {
+      console.log("query", query);
     search(query, opts, function(err, results) {
         if(err) return console.log(err);
+        console.log("results", results);
         socket.emit('search', {results: results})
     });
   })
