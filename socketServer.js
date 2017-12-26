@@ -1,23 +1,29 @@
 'use strict';
 
-const express = require('express');
-const socketIO = require('socket.io');
-const path = require('path');
+const express = require('express'),
+      socketIO = require('socket.io'),
+      path = require('path'),
+      search = require('youtube-search'),
+      ffmpeg = require('@ffmpeg-installer/ffmpeg'),
+      YoutubeMp3Downloader = require("youtube-mp3-downloader"),
+      PORT = process.env.PORT || 3000,
+      INDEX = path.join(__dirname, 'index.html'),
+      server = express(),
+      opts = { maxResults: 50, key: 'AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw' };
 
-const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, 'index.html');
-
-const server = express()
-  .use((req, res) => res.sendFile(INDEX) )
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+server
+    .use((req, res) => res.sendFile(INDEX) )
+    .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
 const io = socketIO(server);
 
 io.on('connection', (socket) => {
   console.log('Client connected');
-  socket.on('search', id => {
-    console.log(id);
-    socket.emit('search', {result: 'reached!' + id});
+  socket.on('search', query => {
+    search(query, opts, function(err, results) {
+        if(err) return console.log(err);
+        socket.emit('search', {results: results});
+    });
   })
   socket.on('disconnect', () => console.log('Client disconnected'));
 });
