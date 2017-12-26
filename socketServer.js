@@ -17,7 +17,7 @@ io.on('connection', (socket) => {
   console.log('Client connected');
   socket.on('search', id => {
     console.log(id);
-    socket.emit('search', {result: 'reached!' + id})M
+    socket.emit('search', {result: 'reached!' + id});
   })
   socket.on('disconnect', () => console.log('Client disconnected'));
 });
