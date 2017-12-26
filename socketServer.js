@@ -102,6 +102,7 @@ var YD = new YoutubeMp3Downloader({
   socket.on("play", id => {
     method == "play";
     YD.download(id);
+    socket.emit("play", {id: id, data: dwnDir});
   });
 
   socket.on("download", id => {
