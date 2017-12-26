@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, 'index.html');
 const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
-const path = require('path');
 const http = require('http');
 const mime = require('mime');
 const fs = require('fs');
