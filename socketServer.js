@@ -8,13 +8,7 @@ const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, 'index.html');
 const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
-const YD = new YoutubeMp3Downloader({
-    "ffmpegPath": ffmpeg.path,
-    "outputPath": __dirname + '/files',
-    "youtubeVideoQuality": "highest",
-    "queueParallelism": 20,
-    "progressTimeout": 100
-});
+
 const server = express()
   .use((req, res) => res.sendFile(INDEX) )
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
@@ -32,6 +26,13 @@ io.on('connection', (socket) => {
   })
 
   socket.on('download', id  => {
+    const YD = new YoutubeMp3Downloader({
+        "ffmpegPath": ffmpeg.path,
+        "outputPath": __dirname + '/files',
+        "youtubeVideoQuality": "highest",
+        "queueParallelism": 20,
+        "progressTimeout": 100
+    });
     console.log("downloading id", id);
     YD.download(id);
     YD.on("progress", function(progress) {
