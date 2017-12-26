@@ -40,9 +40,9 @@ io.on('connection', (socket) => {
     YD.on("finished", function(err, data) {
         socket.emit('download-finished', {id: id, data: data});
     });
-    
+
     YD.on("queueSize", function(size) {
-        console.log(size);
+        socket.emit('queue-changed', {size: size});
     });
   })
   socket.on('disconnect', () => console.log('Client disconnected'));
