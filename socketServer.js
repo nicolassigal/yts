@@ -25,7 +25,7 @@ app.use(express.static(path.join(__dirname, "dist")));
 app.use(cors());
 app.use("/api", router);
 server.listen(PORT, () => console.log(`Listening on ${PORT}`));
-
+let method;
 function deleteFile(file) {
   fs.unlink(file, function(err) {
     if (err) {
@@ -64,7 +64,18 @@ router.get("/download/:name", function(req, res) {
   });
 });
 
-
+function deleteFiles () {
+    setTimeout(function() {
+        fs.readdir(dwnDir, (err, files) => {
+            if (err) throw err;
+            for (const file of files) {
+                if (fs.existsSync(dwnDir + "/" + file)) {
+                    deleteFile(dwnDir + "/" + file);
+                }
+            }
+        });
+    }, 15000);
+}
 function deleteAll () {
     setTimeout(function() {
         fs.readdir(dwnDir, (err, files) => {
@@ -74,6 +85,7 @@ function deleteAll () {
                     deleteFile(dwnDir + "/" + file);
                 }
             }
+        fs.rmdirSync(dwnDir);
         });
     }, 15000);
 }
@@ -107,18 +119,23 @@ var YD = new YoutubeMp3Downloader({
   });
 
   socket.on("download", id => {
+    method = "download";
     YD.download(id);
   });
 
+  socket.on("play", id => {
+    method = "play";
+      socket.emit("play", {dir: dwnDir });
+  })
+
 
   YD.on("queueSize", function(size) {
-    if (size === 0) {
-        deleteAll();
+    if (size === 0 && method == "download") {
+        deleteFiles();
     }
   });
 
   socket.on("disconnect", () => {
         deleteAll();
-        fs.rmdirSync(dwnDir);
     });
 });
