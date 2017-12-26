@@ -44,32 +44,13 @@ function deleteFile (file) {
   });
 }
 
-router.get('/', function(req, res) {
-  res.json({msg: "hi!"});
-});
+
 
 router.get('/search/:query', function(req, res) {
   search(req.params.query, opts, function(err, results) {
     if(err) return console.log(err);
     res.json(results);
    });
-});
-
-router.get('/download/:name', function(req, res) {
-    var file = __dirname + '/files/'+ req.params.name;
-    var filename = path.basename(file);
-    var mimetype = mime.lookup(file);
-  
-    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
-    res.setHeader('Content-type', mimetype);
-  
-    var filestream = fs.createReadStream(file);
-    filestream.pipe(res).once("close", function () {
-      if(filestream){
-      filestream.destroy(); // makesure stream closed, not close if download aborted.
-      }
-      deleteFile(file);
-  });
 });
 
 router.get('/delete/:name', function(req, res) {
@@ -86,7 +67,9 @@ router.get('/delete/:name', function(req, res) {
 });
 
 router.get('/getlink/:id', function(req, res) {
-  YD.download(req.params.id);
+  YD.download(req.params.id).on('success', function(data){
+    console.log(data);
+  });
 });
 //app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'dist/index.html'));});
 app.use('/api', router);

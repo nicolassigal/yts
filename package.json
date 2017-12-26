@@ -11,9 +11,12 @@
   "license": "ISC",
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.13",
+    "bufferutil": "^3.0.3",
     "cors": "^2.8.4",
-    "express": "^4.16.2",
+    "express": "4.16.2",
     "socket.io": "^2.0.4",
+    "utf-8-validate": "^4.0.0",
+    "ws": "^3.3.3",
     "youtube-mp3-downloader": "^0.5.2",
     "youtube-search": "^1.0.10"
   }
