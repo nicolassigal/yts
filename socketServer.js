@@ -94,7 +94,7 @@ var YD = new YoutubeMp3Downloader({
     ffmpegPath: ffmpeg.path,
     outputPath: generateDir(),
     youtubeVideoQuality: "highest",
-    queueParallelism: 5,
+    queueParallelism: 10,
     progressTimeout: 100
     });
   console.log("Client connected");
@@ -119,14 +119,8 @@ var YD = new YoutubeMp3Downloader({
   });
 
   socket.on("download", id => {
-    method = "download";
     YD.download(id);
   });
-
-  socket.on("play", id => {
-    method = "play";
-      socket.emit("play", {dir: dwnDir });
-  })
 
 
   YD.on("queueSize", function(size) {
