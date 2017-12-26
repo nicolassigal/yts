@@ -36,14 +36,6 @@ function deleteFile(file) {
   });
 }
 
-var YD = new YoutubeMp3Downloader({
-    ffmpegPath: ffmpeg.path,
-    outputPath: __dirname + "/files/",
-    youtubeVideoQuality: "highest",
-    queueParallelism: 3,
-    progressTimeout: 100
-});
-
 function generateDir() {
   dwnDir = __dirname + "/files/" + generate_key();
   fs.mkdirSync(dwnDir);
@@ -58,7 +50,7 @@ function generate_key() {
 
 router.get("/download/:name", function(req, res) {
   try {   
-  var file = __dirname + "/files/" + req.params.name;
+  var file = dwnDir + req.params.name;
   var filename = path.basename(file);
   var mimetype = mime.lookup(file);
 
@@ -78,12 +70,12 @@ router.get("/download/:name", function(req, res) {
 
 function deleteAll() {
   setTimeout(function() {
-    fs.readdir(__dirname + "/files", (err, files) => {
+    fs.readdir(dwnDir, (err, files) => {
         if (err) throw err;
       
         for (const file of files) {
-          if(fs.existsSync(__dirname + "/files/"+ file)){
-          fs.unlink(path.join(__dirname + "/files", file), err => {
+          if(fs.existsSync(dwnDir + file)){
+          fs.unlink(path.join(dwnDir, file), err => {
             if (err) throw err;
           });
         }
@@ -92,7 +84,13 @@ function deleteAll() {
   }, 150000);
 }
 io.on("connection", socket => {
-
+  var YD = new YoutubeMp3Downloader({
+    ffmpegPath: ffmpeg.path,
+    outputPath: generateDir(),
+    youtubeVideoQuality: "highest",
+    queueParallelism: 3,
+    progressTimeout: 100
+});
   console.log("Client connected");
 
   YD.on("progress", function(progress) {
@@ -102,7 +100,7 @@ io.on("connection", socket => {
     });
   });
   YD.on("finished", function(err, data) {
-    if (fs.existsSync(__dirname + "/files/"+ data.videoTitle + ".mp3")) {
+    if (fs.existsSync( dwnDir + data.videoTitle + ".mp3")) {
       socket.emit("download-finished", { id: data.videoId, data: data });
     }
   });
@@ -122,6 +120,6 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    deleteAll();
+    fs.removeSync(dwnDir);
   });
 });
