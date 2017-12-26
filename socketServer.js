@@ -121,12 +121,6 @@ io.on("connection", socket => {
     YD.download(id);
   });
 
-  YD.on("queueSize", function(size) {
-    if (size === 0) {
-      deleteAll();
-    }
-  });
-
   socket.on("disconnect", () => {
     deleteAll();
   });
