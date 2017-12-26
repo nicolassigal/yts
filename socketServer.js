@@ -32,7 +32,8 @@ io.on('connection', (socket) => {
   })
 
   socket.on('download', id  => {
-    console.log("id", id);
+    console.log("downloading id", id);
+    YD.download(id);
     YD.on("progress", function(progress) {
         console.log("progress", progress);
         socket.emit('download-progress', {id: id, progress: progress});
