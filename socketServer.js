@@ -99,14 +99,20 @@ var YD = new YoutubeMp3Downloader({
     });
   });
 
+  socket.on("play", id => {
+    method == "play";
+    YD.download(id);
+  });
+
   socket.on("download", id => {
+    method == "download"
     YD.download(id);
   });
 
 
   YD.on("queueSize", function(size) {
     if (size === 0 && method == "download") {
-        deleteFiles();
+        deleteAll();
     }
   });
 
