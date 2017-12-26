@@ -15,10 +15,9 @@ const io = socketIO(server);
 
 io.on('connection', (socket) => {
   console.log('Client connected');
-  socket.on('disconnect', () => console.log('Client disconnected'));
-});
-
-io.on('search', (id) => {
+  socket.on('search', id => {
     console.log(id);
-    io.emit("searched", "reached! " + id);
+    socket.emit('search', {result: 'reached!' + id})M
+  })
+  socket.on('disconnect', () => console.log('Client disconnected'));
 });
