@@ -8,12 +8,32 @@ const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, 'index.html');
 const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
-
+const path = require('path');
+const http = require('http');
+const mime = require('mime');
+const fs = require('fs');
+const YD = new YoutubeMp3Downloader({
+    "ffmpegPath": ffmpeg.path,
+    "outputPath": __dirname + '/files',
+    "youtubeVideoQuality": "highest",
+    "queueParallelism": 20,
+    "progressTimeout": 100
+});
 const server = express()
   .use((req, res) => res.sendFile(INDEX) )
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
 const io = socketIO(server);
+
+function deleteFile (file) { 
+    fs.unlink(file, function (err) {
+        if (err) {
+            console.error(err.toString());
+        } else {
+            console.warn(file + ' deleted');
+        }
+    });
+}
 
 io.on('connection', (socket) => {
   console.log('Client connected');
@@ -26,13 +46,6 @@ io.on('connection', (socket) => {
   })
 
   socket.on('download', id  => {
-    const YD = new YoutubeMp3Downloader({
-        "ffmpegPath": ffmpeg.path,
-        "outputPath": __dirname + '/files',
-        "youtubeVideoQuality": "highest",
-        "queueParallelism": 20,
-        "progressTimeout": 100
-    });
     console.log("downloading id", id);
     YD.download(id);
     YD.on("progress", function(progress) {
@@ -41,6 +54,20 @@ io.on('connection', (socket) => {
     });
     YD.on("finished", function(err, data) {
         console.log("data", data);
+        var file = __dirname + '/files/' + data.title + '.mp3';
+        var filename = path.basename(file);
+        var mimetype = mime.lookup(file);
+      
+        res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+        res.setHeader('Content-type', mimetype);
+      
+        var filestream = fs.createReadStream(file);
+        filestream.pipe(res).once("close", function () {
+          if(filestream){
+          filestream.destroy(); // makesure stream closed, not close if download aborted.
+          }
+          deleteFile(file);
+      });
         socket.emit('download-finished', {id: id, data: data});
     });
 

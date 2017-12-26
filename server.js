@@ -53,6 +53,23 @@ router.get('/search/:query', function(req, res) {
    });
 });
 
+router.get('/download/:name', function(req, res) {
+    var file = __dirname + '/files/'+ req.params.name;
+    var filename = path.basename(file);
+    var mimetype = mime.lookup(file);
+  
+    res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+    res.setHeader('Content-type', mimetype);
+  
+    var filestream = fs.createReadStream(file);
+    filestream.pipe(res).once("close", function () {
+      if(filestream){
+      filestream.destroy(); // makesure stream closed, not close if download aborted.
+      }
+      deleteFile(file);
+  });
+});
+
 router.get('/delete/:name', function(req, res) {
   var file = __dirname + '/files/'+ req.params.name;
 
