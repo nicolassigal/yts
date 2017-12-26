@@ -10,11 +10,6 @@ const ffmpeg = require("@ffmpeg-installer/ffmpeg");
 const YoutubeMp3Downloader = require("youtube-mp3-downloader");
 const http = require("http");
 const crypto = require('crypto');
-const stream = require("youtube-audio-stream-2");
-const url = "http://youtube.com/watch?v=";
-const decoder = require("lame").Decoder;
-const speaker = require("speaker");
-let streamVideo;
 const mime = require("mime");
 const cors = require("cors");
 const fs = require("fs");
@@ -116,23 +111,6 @@ var YD = new YoutubeMp3Downloader({
     YD.download(id);
   });
 
-  socket.on("play", id => {
-    try {
-      streamVideo = stream(url+id)
-        .pipe(decoder())
-        .pipe(speaker());
-    } catch (exception) {
-        console.log(exception);
-    }
-  });
-  socket.on("stop", () => {
-    try {
-      speaker().end();
-      streamVideo.end();
-    } catch (exception) {
-        console.log(exception);
-    }
-  });
 
   YD.on("queueSize", function(size) {
     if (size === 0) {

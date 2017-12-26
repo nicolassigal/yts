@@ -19,8 +19,6 @@
     "socket.io": "^2.0.4",
     "utf-8-validate": "^4.0.0",
     "ws": "^3.3.3",
-    "youtube-audio-player": "^1.0.0",
-    "youtube-audio-stream-2": "0.0.13",
     "youtube-mp3-downloader": "^0.5.2",
     "youtube-search": "^1.0.10"
   }
