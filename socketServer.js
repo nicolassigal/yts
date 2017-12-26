@@ -25,23 +25,25 @@ io.on('connection', (socket) => {
   console.log('Client connected');
 
   socket.on('search', query => {
-      console.log("query", query);
     search(query, opts, function(err, results) {
         if(err) return console.log(err);
-        console.log("results", results);
         socket.emit('search', {results: results})
     });
   })
 
   socket.on('download', id  => {
+    console.log("id", id);
     YD.on("progress", function(progress) {
+        console.log("progress", progress);
         socket.emit('download-progress', {id: id, progress: progress});
     });
     YD.on("finished", function(err, data) {
+        console.log("data", data);
         socket.emit('download-finished', {id: id, data: data});
     });
 
     YD.on("queueSize", function(size) {
+        console.log("size", size);
         socket.emit('queue-changed', {size: size});
     });
   })
