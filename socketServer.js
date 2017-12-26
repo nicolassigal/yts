@@ -20,5 +20,5 @@ io.on('connection', (socket) => {
 
 io.on('search', (id) => {
     console.log(id);
-    io.emit("reached! " + id);
+    io.emit("searched", "reached! " + id);
 });
