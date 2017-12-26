@@ -12,7 +12,7 @@ const http = require("http");
 const crypto = require('crypto');
 const mime = require("mime");
 const cors = require("cors");
-const fs = require("fs");
+const fs = require("fs-extra");
 const bodyParser = require("body-parser");
 const app = express();
 const router = express.Router();
@@ -64,29 +64,10 @@ router.get("/download/:name", function(req, res) {
   });
 });
 
-function deleteFiles () {
-    setTimeout(function() {
-        fs.readdir(dwnDir, (err, files) => {
-            if (err) throw err;
-            for (const file of files) {
-                if (fs.existsSync(dwnDir + "/" + file)) {
-                    deleteFile(dwnDir + "/" + file);
-                }
-            }
-        });
-    }, 15000);
-}
+
 function deleteAll () {
     setTimeout(function() {
-        fs.readdir(dwnDir, (err, files) => {
-            if (err) throw err;
-            for (const file of files) {
-                if (fs.existsSync(dwnDir + "/" + file)) {
-                    deleteFile(dwnDir + "/" + file);
-                }
-            }
-        fs.rmdirSync(dwnDir);
-        });
+        fs.removeSync(dwnDir);
     }, 15000);
 }
 io.on("connection", socket => {
