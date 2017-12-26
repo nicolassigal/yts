@@ -40,7 +40,7 @@ var YD = new YoutubeMp3Downloader({
     ffmpegPath: ffmpeg.path,
     outputPath: __dirname + "/files/",
     youtubeVideoQuality: "highest",
-    queueParallelism: 10,
+    queueParallelism: 3,
     progressTimeout: 100
 });
 
@@ -57,6 +57,7 @@ function generate_key() {
 }
 
 router.get("/download/:name", function(req, res) {
+  try {   
   var file = __dirname + "/files/" + req.params.name;
   var filename = path.basename(file);
   var mimetype = mime.lookup(file);
@@ -70,6 +71,9 @@ router.get("/download/:name", function(req, res) {
       filestream.destroy(); // makesure stream closed, not close if download aborted.
     }
   });
+} catch (error) {
+    console.log(error);
+}
 });
 
 function deleteAll() {
