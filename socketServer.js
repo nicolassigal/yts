@@ -18,7 +18,7 @@ const app = express();
 const router = express.Router();
 var server = http.createServer(app);
 var io = require("socket.io").listen(server);
-let dwnDir;
+let dir;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "dist")));
@@ -44,21 +44,15 @@ var YD = new YoutubeMp3Downloader({
     progressTimeout: 100
 });
 
-function generateDir() {
-  dwnDir = __dirname + "/files/" + generate_key();
-  fs.mkdirSync(dwnDir);
-  return dwnDir;
-}
-
 function generate_key() {
   var sha = crypto.createHash("sha256");
   sha.update(Math.random().toString());
   return sha.digest("hex");
 }
 
-router.get("/download/:name", function(req, res) {
+router.get("/download/:ssid/:name", function(req, res) {
   try {   
-  var file = __dirname + "/files/" + req.params.name;
+  var file = `${__dirname}/files/${req.params.ssid}/${req.params.name}`;
   var filename = path.basename(file);
   var mimetype = mime.lookup(file);
 
@@ -76,24 +70,9 @@ router.get("/download/:name", function(req, res) {
 }
 });
 
-function deleteAll() {
-  setTimeout(function() {
-    fs.readdir(__dirname + "/files", (err, files) => {
-        if (err) throw err;
-      
-        for (const file of files) {
-          if(fs.existsSync(__dirname + "/files/"+ file)){
-          fs.unlink(path.join(__dirname + "/files", file), err => {
-            if (err) throw err;
-          });
-        }
-        }
-      });
-  }, 150000);
-}
 io.on("connection", socket => {
-
-  console.log("Client connected");
+  let client_session = generate_key();
+  socket.emit("session", client_session);
 
   YD.on("progress", function(progress) {
     socket.emit("download-progress", {
@@ -102,14 +81,13 @@ io.on("connection", socket => {
     });
   });
   YD.on("finished", function(err, data) {
-    if (fs.existsSync(__dirname + "/files/"+ data.videoTitle + ".mp3")) {
+    let fileDir = `${__dirname}/files/${client_session}/${data.videoTitle.replace(",","")}.mp3`;
+    if (fs.existsSync(fileDir)) {
+      data.videoTitle.replace(",","");
       socket.emit("download-finished", { id: data.videoId, data: data });
     }
   });
 
-  YD.on("queueSize", function(size) {
-    socket.emit("queue-changed", { size: size });
-  });
   socket.on("search", query => {
     search(query, opts, function(err, results) {
       if (err) return console.log(err);
@@ -117,12 +95,18 @@ io.on("connection", socket => {
     });
   });
 
-  socket.on("download", id => {
-    YD.download(id);
+  socket.on("download", data => {
+    if (!fs.existsSync(`files/${data.ssid}`)){
+      fs.mkdirSync(`files/${data.ssid}`);
+    }
+    YD.download(data.song.id, `${data.ssid}/${data.song.title.replace(",","")}.mp3`);
   });
 
 
   socket.on("disconnect", () => {
-    deleteAll();
+    let dir = `files/${client_session}`;
+    if (fs.existsSync(dir)) {
+      fs.removeSync(dir);
+    }
   });
 });
