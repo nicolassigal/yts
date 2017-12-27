@@ -47,7 +47,7 @@ var YD = new YoutubeMp3Downloader({
 function generate_key() {
   var sha = crypto.createHash("sha256");
   sha.update(Math.random().toString());
-  return sha.digest("hex");
+  return sha.digest("hex").substring(0,15);
 }
 
 router.get("/download/:ssid/:name", function(req, res) {
