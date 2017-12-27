@@ -97,17 +97,13 @@ io.on("connection", socket => {
 
   socket.on("download", data => {
     let dir = path.join(__dirname, 'files', data.ssid);
-    if (!fs.existsSync(dir)){
-      fs.mkdirSync(dir);
-    }
+    fs.ensureDirSync(dir);
     YD.download(data.song.id, `${data.ssid}/${data.song.title.replace(",","")}.mp3`);
   });
 
 
   socket.on("disconnect", () => {
     let dir = path.join(__dirname, 'files', client_session);
-    if (fs.existsSync(dir)) {
-      fs.removeSync(dir);
-    }
+    fs.removeSync(dir);
   });
 });
