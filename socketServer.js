@@ -96,15 +96,15 @@ io.on("connection", socket => {
   });
 
   socket.on("download", data => {
-    if (!fs.existsSync(`files/${data.ssid}`)){
-      fs.mkdirSync(`files/${data.ssid}`);
+    if (!fs.existsSync(`${__dirname}/files/${data.ssid}`)){
+      fs.mkdirSync(`${__dirname}/files/${data.ssid}`);
     }
     YD.download(data.song.id, `${data.ssid}/${data.song.title.replace(",","")}.mp3`);
   });
 
 
   socket.on("disconnect", () => {
-    let dir = `files/${client_session}`;
+    let dir = `${__dirname}/files/${client_session}`;
     if (fs.existsSync(dir)) {
       fs.removeSync(dir);
     }
