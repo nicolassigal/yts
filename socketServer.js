@@ -16,13 +16,12 @@ const fs = require("fs-extra");
 const bodyParser = require("body-parser");
 const app = express();
 const router = express.Router();
-const Spotify = require('node-spotify-api');
+const Spotify = require("node-spotify-api");
 
 const spotify = new Spotify({
-  id: '89bb271e01a541e6a3f060e67b594e62',
-  secret: '589e58be2c69441fa152ee8f997f94a7'
+  id: "89bb271e01a541e6a3f060e67b594e62",
+  secret: "589e58be2c69441fa152ee8f997f94a7"
 });
-
 
 var server = http.createServer(app);
 var io = require("socket.io").listen(server);
@@ -45,40 +44,40 @@ function deleteFile(file) {
 }
 
 var YD = new YoutubeMp3Downloader({
-    ffmpegPath: ffmpeg.path,
-    outputPath: __dirname + "/files/",
-    youtubeVideoQuality: "highest",
-    queueParallelism: 3,
-    progressTimeout: 100
+  ffmpegPath: ffmpeg.path,
+  outputPath: __dirname + "/files/",
+  youtubeVideoQuality: "highest",
+  queueParallelism: 3,
+  progressTimeout: 100
 });
 
 function generate_key() {
   var sha = crypto.createHash("sha256");
   sha.update(Math.random().toString());
-  return sha.digest("hex").substring(0,15);
+  return sha.digest("hex").substring(0, 15);
 }
 
 router.get("/download/:ssid/:name", function(req, res) {
-  try {   
-  var file = `${__dirname}/files/${req.params.ssid}/${req.params.name}`;
-  var filename = path.basename(file);
-  var mimetype = mime.lookup(file);
+  try {
+    var file = `${__dirname}/files/${req.params.ssid}/${req.params.name}`;
+    var filename = path.basename(file);
+    var mimetype = mime.lookup(file);
 
-  res.setHeader("Content-disposition", "attachment; filename=" + filename);
-  res.setHeader("Content-type", mimetype);
+    res.setHeader("Content-disposition", "attachment; filename=" + filename);
+    res.setHeader("Content-type", mimetype);
 
-  var filestream = fs.createReadStream(file);
-  filestream.pipe(res).once("close", function() {
-    if (filestream) {
-      filestream.destroy(); // makesure stream closed, not close if download aborted.
-    }
-  });
-} catch (error) {
+    var filestream = fs.createReadStream(file);
+    filestream.pipe(res).once("close", function() {
+      if (filestream) {
+        filestream.destroy(); // makesure stream closed, not close if download aborted.
+      }
+    });
+  } catch (error) {
     console.log(error);
-}
+  }
 });
 
-function getList (playlist) {
+function getList(playlist) {
   playlist = playlist.map(song => {
     return `${song.track.artists[0].name} - ${song.track.name} (audio only)`;
   });
@@ -90,58 +89,101 @@ io.on("connection", socket => {
   let client_session = generate_key();
   socket.emit("session", client_session);
   socket.on("spotify-get-playlist", user => {
-    spotify.request(`	https://api.spotify.com/v1/users/${user}/playlists`)
-    .then(res => {
-      socket.emit("spotify-get-playlist", res);
-    })
-    .catch(err => console.log(err));
+    spotify
+      .request(`	https://api.spotify.com/v1/users/${user}/playlists`)
+      .then(res => {
+        socket.emit("spotify-get-playlist", res);
+      })
+      .catch(err => console.log(err));
   });
 
-  socket.on('spotify-search', search => {
-    spotify.search({ type: search.type , query: search.query })
-    .then(function(response) {
-      if(search.type == 'track') {
-        response = response.tracks.items;
-      }
-      if(search.type == 'playlist') {
-        response = response.playlists.items;
-      }
-      if(search.type == 'artist') {
-        response = response.artists.items;
-      }
-      if(search.type == 'album') {
-        response = response.albums.items;
-      }
-      socket.emit('spotify-search', {list: response, type: search.type});
-    })
-    .catch(function(err) {
-      console.log(err);
+  socket.on("spotify-search", search => {
+    spotify
+      .search({ type: search.type, query: search.query })
+      .then(function(response) {
+        if (search.type == "track") {
+          response = response.tracks.items;
+        }
+        if (search.type == "playlist") {
+          response = response.playlists.items;
+        }
+        if (search.type == "artist") {
+          response = response.artists.items;
+        }
+        if (search.type == "album") {
+          response = response.albums.items;
+        }
+        socket.emit("spotify-search", { list: response, type: search.type });
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+  });
+
+  socket.on("spotify-request", req => {
+    spotify.request(`${req.query}`).then(res => {
+      let type = "";
+      socket.emit("spotify-request", { list: res, type: req.type });
     });
   });
 
-  socket.on('spotify-playlist-search', playlist => {
-    spotify.request(`${playlist}/tracks`)
-    .then(function(response) {
-    socket.emit('spotify-search-list-length', response.items.length);
-    
-     let playlist = getList(response.items);
-     playlist.forEach(song => {
-      search(song, { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" }, function(err, results) {
+  socket.on("spotify-track-search", track => {
+    socket.emit("spotify-search-list-length", 1);
+    search(
+      `${track.artists[0].name} - ${track.name} (audio only)`,
+      { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" },
+      function(err, results) {
         if (err) return console.log(err);
         let found = false;
         let vid = results.filter(element => {
-          if (!found && element.kind == 'youtube#video' && (!element.title.includes('instrumental') && !element.title.includes('cover'))) {
+          if (
+            !found &&
+            element.kind == "youtube#video" &&
+            (!element.title.includes("instrumental") &&
+              !element.title.includes("cover"))
+          ) {
             found = true;
             return element;
           }
         });
-        socket.emit("search-spotube", vid[0]);     
+        socket.emit("search-spotube", vid[0]);
+      }
+    );
+  });
+
+  socket.on("spotify-playlist-search", playlist => {
+    spotify
+      .request(`${playlist}`)
+      .then(function(response) {
+        socket.emit("spotify-search-list-length", response.items.length);
+
+        let playlist = getList(response.items);
+        playlist.forEach(song => {
+          search(
+            song,
+            { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" },
+            function(err, results) {
+              if (err) return console.log(err);
+              let found = false;
+              let vid = results.filter(element => {
+                if (
+                  !found &&
+                  element.kind == "youtube#video" &&
+                  (!element.title.includes("instrumental") &&
+                    !element.title.includes("cover"))
+                ) {
+                  found = true;
+                  return element;
+                }
+              });
+              socket.emit("search-spotube", vid[0]);
+            }
+          );
+        });
+      })
+      .catch(function(err) {
+        console.log(err);
       });
-     });     
-    })
-    .catch(function(err) {
-      console.log(err);
-    });
   });
 
   YD.on("progress", function(progress) {
@@ -151,15 +193,21 @@ io.on("connection", socket => {
     });
   });
   YD.on("finished", function(err, data) {
-    let fileDir = `${__dirname}/files/${client_session}/${data.videoTitle.replace(",","")}.mp3`;
+    let fileDir = `${__dirname}/files/${client_session}/${data.videoTitle.replace(
+      ",",
+      ""
+    )}.mp3`;
     if (fs.existsSync(fileDir)) {
-      data.videoTitle.replace(",","");
+      data.videoTitle.replace(",", "");
       socket.emit("download-finished", { id: data.videoId, data: data });
     }
   });
 
   socket.on("search", query => {
-    const opts = { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" };
+    const opts = {
+      maxResults: 50,
+      key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw"
+    };
     search(query, opts, function(err, results) {
       if (err) return console.log(err);
       socket.emit("search", { results: results });
@@ -167,14 +215,16 @@ io.on("connection", socket => {
   });
 
   socket.on("download", data => {
-    let dir = path.join(__dirname, 'files', data.ssid);
+    let dir = path.join(__dirname, "files", data.ssid);
     fs.ensureDirSync(dir);
-    YD.download(data.song.id, `${data.ssid}/${data.song.title.replace(",","")}.mp3`);
+    YD.download(
+      data.song.id,
+      `${data.ssid}/${data.song.title.replace(",", "")}.mp3`
+    );
   });
 
-
   socket.on("disconnect", () => {
-    let dir = path.join(__dirname, 'files', client_session);
+    let dir = path.join(__dirname, "files", client_session);
     fs.removeSync(dir);
   });
 });
