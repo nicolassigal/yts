@@ -16,6 +16,7 @@
     "crypto": "^1.0.1",
     "express": "4.16.2",
     "fs-extra": "^5.0.0",
+    "node-spotify-api": "^1.0.7",
     "socket.io": "^2.0.4",
     "utf-8-validate": "^4.0.0",
     "ws": "^3.3.3",

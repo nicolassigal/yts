@@ -3,7 +3,7 @@ const search = require("youtube-search");
 const express = require("express");
 const socketIO = require("socket.io");
 const path = require("path");
-const opts = { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" };
+
 const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, "index.html");
 const ffmpeg = require("@ffmpeg-installer/ffmpeg");
@@ -16,6 +16,14 @@ const fs = require("fs-extra");
 const bodyParser = require("body-parser");
 const app = express();
 const router = express.Router();
+const Spotify = require('node-spotify-api');
+
+const spotify = new Spotify({
+  id: '89bb271e01a541e6a3f060e67b594e62',
+  secret: '589e58be2c69441fa152ee8f997f94a7'
+});
+
+
 var server = http.createServer(app);
 var io = require("socket.io").listen(server);
 let dir;
@@ -70,9 +78,59 @@ router.get("/download/:ssid/:name", function(req, res) {
 }
 });
 
+function getList (playlist) {
+  playlist = playlist.map(song => {
+    return `${song.track.artists[0].name} - ${song.track.name} (audio only)`;
+  });
+
+  return playlist;
+}
+
 io.on("connection", socket => {
   let client_session = generate_key();
   socket.emit("session", client_session);
+  socket.on("spotify-get-playlist", user => {
+    spotify.request(`	https://api.spotify.com/v1/users/${user}/playlists`)
+    .then(res => {
+      socket.emit("spotify-get-playlist", res);
+    })
+    .catch(err => console.log(err));
+  });
+
+  socket.on('spotify-search', search => {
+    spotify.search({ type: search.type , query: search.query })
+    .then(function(response) {
+      socket.emit('spotify-search', response);
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
+  });
+
+  socket.on('spotify-playlist-search', playlist => {
+    spotify.request(`${playlist}/tracks`)
+    .then(function(response) {
+    socket.emit('spotify-search-list-length', response.items.length);
+    
+     let playlist = getList(response.items);
+     playlist.forEach(song => {
+      search(song, { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" }, function(err, results) {
+        if (err) return console.log(err);
+        let found = false;
+        let vid = results.filter(element => {
+          if (!found && element.kind == 'youtube#video' && (!element.title.includes('instrumental') && !element.title.includes('cover'))) {
+            found = true;
+            return element;
+          }
+        });
+        socket.emit("search-spotube", vid[0]);     
+      });
+     });     
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
+  });
 
   YD.on("progress", function(progress) {
     socket.emit("download-progress", {
@@ -89,6 +147,7 @@ io.on("connection", socket => {
   });
 
   socket.on("search", query => {
+    const opts = { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" };
     search(query, opts, function(err, results) {
       if (err) return console.log(err);
       socket.emit("search", { results: results });
