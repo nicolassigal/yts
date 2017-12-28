@@ -100,7 +100,19 @@ io.on("connection", socket => {
   socket.on('spotify-search', search => {
     spotify.search({ type: search.type , query: search.query })
     .then(function(response) {
-      socket.emit('spotify-search', response);
+      if(search.type == 'track') {
+        response = response.tracks.items;
+      }
+      if(search.type == 'playlist') {
+        response = response.playlists.items;
+      }
+      if(search.type == 'artist') {
+        response = response.artists.items;
+      }
+      if(search.type == 'album') {
+        response = response.albums.items;
+      }
+      socket.emit('spotify-search', {list: response, type: search.type});
     })
     .catch(function(err) {
       console.log(err);
