@@ -102,7 +102,7 @@ function searchQuery (song, artist) {
 }
 
 io.on("connection", socket => {
-  console.log("a client connected");
+  console.log("one client connected");
   let client_session = generate_key();
   socket.emit("session", client_session);
   socket.on("spotify-get-playlist", user => {
