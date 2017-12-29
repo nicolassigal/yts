@@ -85,6 +85,22 @@ function getList(playlist) {
   return playlist;
 }
 
+function searchQuery (song, artist) {
+  return new Promise((resolve, reject) => {
+      search(song, { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" }, function(err, results) {
+      if (err) return console.log(err);
+      let found = false;
+      let vid = results.filter(element => {
+        if (!found && element.kind == "youtube#video" && element.title.includes(artist) && (!element.title.includes("instrumental") && !element.title.includes("cover"))) {
+          found = true;
+          return element;
+        }
+      });
+      resolve(vid[0]);
+    });
+  });
+}
+
 io.on("connection", socket => {
   let client_session = generate_key();
   socket.emit("session", client_session);
@@ -129,19 +145,11 @@ io.on("connection", socket => {
 
   socket.on("spotify-track-search", track => {
     socket.emit("spotify-search-list-length", 1);
-    search(
-      `${track.artists[0].name} - ${track.name} (audio only)`,
-      { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" },
-      function(err, results) {
+    search(`${track.artists[0].name} - ${track.name} (audio only)`, { maxResults: 50, key: "AIzaSyCnqAFM5z0dsC_gPE-DQeFrQe2PScejMMw" }, function(err, results) {
         if (err) return console.log(err);
         let found = false;
         let vid = results.filter(element => {
-          if (
-            !found &&
-            element.kind == "youtube#video" &&
-            (!element.title.includes("instrumental") &&
-              !element.title.includes("cover"))
-          ) {
+          if (!found && element.kind == "youtube#video" && (!element.title.includes("instrumental") && !element.title.includes("cover"))) {
             found = true;
             return element;
           }
@@ -193,12 +201,9 @@ io.on("connection", socket => {
     });
   });
   YD.on("finished", function(err, data) {
-    let fileDir = `${__dirname}/files/${client_session}/${data.videoTitle.replace(
-      ",",
-      ""
-    )}.mp3`;
-    if (fs.existsSync(fileDir)) {
-      data.videoTitle.replace(",", "");
+    data.videoTitle = data.videoTitle.replace(/[^a-zA-Z ]/g, '');
+    let fileDir = `${__dirname}/files/${client_session}/${data.videoTitle}.mp3`;
+    if (fs.existsSync(fileDir)) {      
       socket.emit("download-finished", { id: data.videoId, data: data });
     }
   });
@@ -216,11 +221,25 @@ io.on("connection", socket => {
 
   socket.on("download", data => {
     let dir = path.join(__dirname, "files", data.ssid);
+    let ssid = data.ssid;
+    let title = data.song.title.replace(/[^a-zA-Z ]/g, '');
     fs.ensureDirSync(dir);
-    YD.download(
-      data.song.id,
-      `${data.ssid}/${data.song.title.replace(",", "")}.mp3`
-    );
+    YD.download(data.song.id,`${data.ssid}/${title}.mp3`);
+  });
+
+  socket.on("spotify-download-all", list => {
+    let promises = [];
+    let plist = list.map(song => {
+      return { url: `${song.artists[0].name} - ${song.name}  audio (only) lyrics letras letra`, artist: song.artists[0].name };
+    });
+    
+    plist.forEach(track => {
+      promises.push(searchQuery(track.url, track.artist));
+    });
+    
+    Promise.all(promises).then(tracks => {
+      socket.emit("spotify-download-all", tracks);
+    })
   });
 
   socket.on("disconnect", () => {
