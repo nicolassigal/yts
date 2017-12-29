@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node socketServer.js"
+    "start": "node socketServer.js",
+    "git": "git add . && git commit -m 'asd' && git push -u origin master",
+    "heroku:logs": "heroku logs -a ytjoy",
+    "deploy": "npm run git | npm run heroku:logs"
   },
   "author": "",
   "license": "ISC",
