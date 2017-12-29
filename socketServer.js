@@ -102,6 +102,7 @@ function searchQuery (song, artist) {
 }
 
 io.on("connection", socket => {
+  console.log("client connected");
   let client_session = generate_key();
   socket.emit("session", client_session);
   socket.on("spotify-get-playlist", user => {
@@ -243,6 +244,7 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
+    console.log("client disconnected");
     let dir = path.join(__dirname, "files", client_session);
     fs.removeSync(dir);
   });
